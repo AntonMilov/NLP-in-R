@@ -1,0 +1,130 @@
+---
+title: "Word2Vec"
+author: "22ВВИм1 Милованов А.С. Здерев С.Г."
+output: html_document
+---
+## Импорт библиотек
+```{r library, message=FALSE}
+library(data.table) 
+library(word2vec) 
+library(readr)
+library(tm) 
+library(stringr) 
+```
+
+## Импорт библиотек для визуализации векторных представлений
+```{r library visualization, message=FALSE}
+
+library(ggplot2) 
+library(ggrepel) 
+library(plotly) 
+library(umap) 
+```
+
+# Word2Vec с архитектурой CBOW
+
+## Загрузка данных
+```{r load data cbow, message=FALSE}
+file_name <-"./processed_text.txt"
+
+text <- read_lines(file_name) 
+```
+
+
+## Обучение модели
+```{r model cbow, message=FALSE}
+model = word2vec(x = file_name, type = "cbow", dim = 15, iter = 20)
+```
+
+
+## Вывод "близких слов" по векторному представлению для слова "это"
+```{r cbow lookslike, message=FALSE}
+cbow_lookslike <- predict(model, c("это"), type = "nearest", top_n = 10) 
+print(cbow_lookslike)
+```
+
+ 
+# Визуализация векторных представлений полученных с помощью Word2Vec с архитектурой CBOW
+```{r visualization cbow, message=FALSE}
+
+corpus <- Corpus(VectorSource(text))
+
+dtm <- DocumentTermMatrix(corpus) 
+
+words <- colnames(as.matrix(dtm)) 
+
+word_list <- strsplit(words, " ") 
+word_list <- unlist(word_list) 
+
+word_list <- word_list[word_list != ""] 
+
+embedding <- as.matrix(model) 
+embedding <- predict(model, word_list, type = "embedding") 
+embedding <- na.omit(embedding)
+
+
+vizualization <- umap(embedding, n_neighbors = 15, n_threads = 2) 
+
+df  <- data.frame(word = rownames(embedding),  
+                  xpos = gsub(".+//", "", rownames(embedding)),  
+                  x = vizualization$layout[, 1], y = vizualization$layout[, 2],  
+                  stringsAsFactors = FALSE) 
+
+plot_ly(df, x = ~x, y = ~y, type = "scatter", mode = 'text', text = ~word) %>% 
+  layout(title = "CBOW Embeddings Visualization")
+```
+
+
+# Word2Vec с архитектурой Skip-Gram
+
+## Загрузка данных
+```{r load data skip-Gram, message=FALSE}
+file_name <-"./processed_text.txt"
+
+text <- read_lines(file_name) 
+```
+
+
+## Обучение модели
+```{r model skip-gram, message=FALSE}
+model = word2vec(x = file_name, type = "skip-gram", dim = 15, iter = 20)
+```
+
+
+## Вывод "близких слов" по векторному представлению для слова "это"
+```{r skip-gram lookslike, message=FALSE}
+cbow_lookslike <- predict(model, c("это"), type = "nearest", top_n = 10) 
+print(cbow_lookslike)
+```
+
+ 
+# Визуализация векторных представлений полученных с помощью Word2Vec с архитектурой Skip-Gram
+
+```{r visualization skip-gram, message=FALSE}
+
+corpus <- Corpus(VectorSource(text))
+
+dtm <- DocumentTermMatrix(corpus) 
+
+words <- colnames(as.matrix(dtm)) 
+
+word_list <- strsplit(words, " ") 
+word_list <- unlist(word_list) 
+
+word_list <- word_list[word_list != ""] 
+
+embedding <- as.matrix(model) 
+embedding <- predict(model, word_list, type = "embedding") 
+embedding <- na.omit(embedding)
+
+
+vizualization <- umap(embedding, n_neighbors = 15, n_threads = 2) 
+
+df  <- data.frame(word = rownames(embedding),  
+                  xpos = gsub(".+//", "", rownames(embedding)),  
+                  x = vizualization$layout[, 1], y = vizualization$layout[, 2],  
+                  stringsAsFactors = FALSE) 
+
+plot_ly(df, x = ~x, y = ~y, type = "scatter", mode = 'text', text = ~word) %>% 
+  layout(title = "Skip-Gram Embeddings Visualization")
+```

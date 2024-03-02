@@ -1,0 +1,128 @@
+---
+title: "text_preprocess"
+author: "22ВВИм1 Милованов А.С. Здерев С.Г."
+output: html_document
+---
+
+## Импорт библиотек
+```{r library, message=FALSE}
+library(tokenizers)
+library(pdftools)
+library(stringr)
+library(wordcloud)
+library(tidyverse)
+
+
+# Text mining
+library(tm)
+library(SnowballC)
+```
+
+
+## Чтение пдф файла
+
+```{r read pdf,  message=FALSE}
+pdf_file <-"./pdf/small_pdf.pdf"
+
+
+text <- pdf_text(pdf_file)
+```
+
+## Вывод текста с первой страницы
+```{r firt page, echo=TRUE}
+cat(text[[1]])
+```
+
+## Сплит текста
+```{r split, echo=TRUE}
+text_splited <- strsplit(text, "\n")
+
+page_1 <- text_splited[[1]]
+
+print(page_1[1:20])
+```
+
+## Объеденение текста
+```{r union text, echo=TRUE}
+union <- function(..., sep='') {
+     paste(..., collapse=sep)
+}
+
+union_text <- union(text)
+
+```
+
+## Количество символов в тексте
+```{r length , echo=TRUE}
+cat("Количество символов", str_length(union_text))
+```
+
+## Подсчет частоты слов с записью в файл
+```{r word freq , echo=TRUE}
+union_text_splited <- strsplit(union_text, "\\W")
+union_text_splited <- unlist(union_text_splited)
+
+freq<-table(union_text_splited)
+
+freq1<-sort(freq, decreasing=TRUE)
+
+temple.sorted.table<-paste(names(freq1), freq1, sep=" ")
+
+cat("Word\tFREQ", temple.sorted.table, file="frequency.txt", sep="\n")
+```
+
+## Облако слов
+```{r wordcloud , echo=TRUE, message= FALSE, warning=FALSE}
+wordcloud(union_text_splited, scale = c(2, 1), min.freq = 30, colors = rainbow(30))
+```
+
+# Предварительаня обработка текста
+## Обработка
+```{r preprocess , echo=TRUE, message= FALSE}
+corpus <- VCorpus(VectorSource(union_text))
+corpus <- tm_map(corpus, PlainTextDocument)
+corpus <- tm_map(corpus, tolower)
+corpus <- tm_map(corpus, stripWhitespace)
+corpus <- tm_map(corpus, removeWords, stopwords("russian"))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, stemDocument)
+
+processed_text <- union(corpus[[1]][1])
+processed_text<-str_replace_all(processed_text, "[[:punct:]]", " ")
+
+```
+
+
+## Запись обработанного текста в файл
+```{r write to file , echo=TRUE, message= FALSE}
+cat(processed_text, file="processed_text.txt", sep="\n")
+```
+
+
+## Количество символов в тексте
+```{r processed text length , echo=TRUE, message= FALSE}
+cat("Количество символов", str_length(processed_text))
+```
+
+
+
+## Подсчет частоты слов с записью в файл
+```{r processed text freq , echo=TRUE, message= FALSE}
+processed_text_splited <- strsplit(processed_text, "\\W")
+processed_text_splited <- unlist(text_splited)
+
+freq<-table(processed_text_splited)
+
+freq1<-sort(freq, decreasing=TRUE)
+temple.sorted.table<-paste(names(freq1), freq1, sep=" ")
+
+cat("Word\tFREQ", temple.sorted.table, file="frequency_processed_text.txt", sep="\n")
+```
+
+
+## Облако слов
+```{r processed text wordcloud , echo=TRUE, message= FALSE, warning=FALSE}
+wordcloud(processed_text_splited, scale = c(2, 1), min.freq = 30, colors = rainbow(30))
+```
+
+
