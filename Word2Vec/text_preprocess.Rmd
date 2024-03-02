@@ -109,7 +109,7 @@ cat("Количество символов", str_length(processed_text))
 ## Подсчет частоты слов с записью в файл
 ```{r processed text freq , echo=TRUE, message= FALSE}
 processed_text_splited <- strsplit(processed_text, "\\W")
-processed_text_splited <- unlist(text_splited)
+processed_text_splited <- unlist(processed_text_splited)
 
 freq<-table(processed_text_splited)
 
